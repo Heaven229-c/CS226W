@@ -1,91 +1,81 @@
-# Hướng dẫn cài đặt và cấu hình Snort
+# Hướng dẫn Cài đặt và Cấu hình Snort
 
-## 1. Cài đặt Snort
+## Bước 1: Cập nhật Danh sách Gói
+Trước tiên, chúng ta cần cập nhật danh sách các gói trên hệ điều hành Ubuntu bằng lệnh sau:
 
-### Bước 1: Cài đặt các gói phụ thuộc
-Trước khi cài đặt Snort, cần cài đặt các gói phụ thuộc sau:
 ```bash
-sudo apt update
-sudo apt install -y build-essential libpcap-dev libpcre3-dev libdumbnet-dev bison flex zlib1g-dev
+sudo apt-get update
 ```
 
-### Bước 2: Tải và cài đặt Snort
-Tải bản Snort mới nhất từ trang chủ Snort:
+## Bước 2: Cài đặt Snort
+Việc cài đặt Snort trên Ubuntu rất đơn giản, chỉ cần sử dụng lệnh sau:
+
 ```bash
-wget https://www.snort.org/downloads/snort/snort-2.9.x.tar.gz
-```
-Giải nén và cài đặt:
-```bash
-tar -xvzf snort-2.9.x.tar.gz
-cd snort-2.9.x
-./configure --enable-sourcefire
-make
-sudo make install
+sudo apt-get install snort -y
 ```
 
-### Bước 3: Tạo thư mục cần thiết
+Trong quá trình cài đặt, hệ thống sẽ yêu cầu bạn chọn giao diện mạng mà Snort sẽ giám sát.
+
+Để xác định giao diện mạng, sử dụng lệnh sau:
+
 ```bash
-sudo mkdir -p /etc/snort/rules
-sudo mkdir /var/log/snort
-sudo touch /etc/snort/rules/local.rules
-sudo touch /etc/snort/snort.conf
-```
-Cấp quyền cho thư mục log:
-```bash
-sudo chmod -R 5775 /var/log/snort
+ip a
 ```
 
-### Bước 4: Kiểm tra cài đặt
-Kiểm tra phiên bản Snort:
+Sau đó, nhập giao diện mạng tương ứng vào phần cấu hình của Snort.
+
+Tiếp theo, Snort sẽ yêu cầu bạn xác định giá trị `HOME_NET`. Trong bài hướng dẫn này, Snort được sử dụng như một Host Based IDS, vì vậy bạn chỉ cần nhập địa chỉ IP của máy Ubuntu.
+
+Để kiểm tra phiên bản Snort đã cài đặt, sử dụng lệnh sau:
+
 ```bash
 snort -V
 ```
 
-## 2. Cấu hình Snort
+## Bước 3: Cấu hình Snort
+File cấu hình `snort.conf` được lưu tại thư mục `/etc/snort`. Snort sẽ hoạt động dựa trên cấu hình trong file này.
 
-### Bước 1: Cấu hình file `snort.conf`
-Mở file cấu hình Snort:
+### Cấu hình Biến Mạng
+Vì sử dụng Snort như một Host Based IDS, bạn cần đặt giá trị `HOME_NET` là địa chỉ IP của máy Ubuntu. Mở file `/etc/snort/snort.conf` bằng trình chỉnh sửa yêu thích của bạn (ở đây sử dụng VIM):
+
 ```bash
-sudo nano /etc/snort/snort.conf
+sudo vim /etc/snort/snort.conf
 ```
-Thêm các cài đặt cơ bản:
+
+Sau đó, thay đổi giá trị `HOME_NET` như sau:
+
 ```bash
-# Thư mục chứa các rules
-var RULE_PATH /etc/snort/rules
-
-# Thư mục log
-var LOG_PATH /var/log/snort
-
-# Cấu hình mạng nội bộ
-ipvar HOME_NET 192.168.1.0/24
-
-# Nạp rules
-include $RULE_PATH/local.rules
+var HOME_NET 192.168.x.x/24  # Thay "192.168.x.x" bằng địa chỉ IP của máy Ubuntu
 ```
 
-### Bước 2: Thêm luật Snort
-Chỉnh sửa file `local.rules` để thêm luật mới:
+### Kiểm tra Đường dẫn và File Quy tắc
+Biến `RULE_PATH` trong file `snort.conf` xác định vị trí của các file quy tắc Snort. Các quy tắc của bạn sẽ được lưu trong file `/etc/snort/rules/local.rules`.
+
+Snort cài đặt kèm theo một số quy tắc cộng đồng mặc định. Ví dụ: Để kiểm tra quy tắc liên quan đến backdoor, bạn có thể xem file `backdoor.rules`.
+
+Để thử nghiệm Snort hiệu quả, hãy tạm thời vô hiệu hóa các quy tắc cộng đồng và chỉ sử dụng file `local.rules` chứa quy tắc của bạn.
+
+### Cấu hình File Output
+Để tạo file log phân tích cảnh báo theo mẫu lưu lượng, có thể sử dụng các phương pháp sau. Trong bài này, log sẽ được ghi dưới dạng file CSV và PCAP.
+
+- Để ghi log dạng CSV, thêm dòng sau vào phần "Configure output plugins" trong file `snort.conf`:
+
 ```bash
-sudo nano /etc/snort/rules/local.rules
-```
-Ví dụ, thêm luật phát hiện gói tin ICMP:
-```
-alert icmp any any -> any any (msg:"ICMP Packet Detected"; sid:1000001; rev:1;)
+output alert_csv: /var/log/snort/alert.csv default
 ```
 
-### Bước 3: Kiểm tra cấu hình
-Kiểm tra tính đúng của cài đặt:
+- Để ghi log dạng PCAP, thêm dòng sau vào cùng phần:
+
 ```bash
-snort -T -c /etc/snort/snort.conf
+output log_tcpdump: /var/log/snort/tcpdump.log
 ```
 
-### Bước 4: Chạy Snort
-Chạy Snort trong chế độ giám sát mạng:
+### Kiểm tra File Cấu hình
+Kiểm tra file cấu hình với lệnh sau. Nếu có lỗi trong file cấu hình, lệnh này sẽ thông báo lỗi.
+
 ```bash
-snort -A console -q -c /etc/snort/snort.conf -i eth0
+sudo snort -T -i ens33 -c /etc/snort/snort.conf
 ```
-Trong đó:
-- `-A console`: Hiển thị cảnh báo trên console.
-- `-q`: Chế độ im lặng (giảm log không cần thiết).
-- `-i eth0`: Chọn giao diện mạng `eth0`.
+
+Nếu mọi thứ được cấu hình đúng, bạn sẽ thấy thông báo "Snort successfully validated the configuration!" ở cuối màn hình.
 
