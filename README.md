@@ -81,3 +81,6 @@ Nếu mọi thứ được cấu hình đúng, bạn sẽ thấy thông báo "Sn
 
 # Phát hiện tấn công SSH BruteForce
 https://drive.google.com/file/d/1mxWrY7YiBgDIaUWt_oxvybwRFGCQ-dMU/view?usp=sharing
+
+# Phát hiện tấn công DDoS
+https://drive.google.com/file/d/1h9fqsqwViOgR47ZcwlBXg-iSUUlxNPR9/view?usp=sharing
