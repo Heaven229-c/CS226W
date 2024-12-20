@@ -79,3 +79,5 @@ sudo snort -T -i ens33 -c /etc/snort/snort.conf
 
 Nếu mọi thứ được cấu hình đúng, bạn sẽ thấy thông báo "Snort successfully validated the configuration!" ở cuối màn hình.
 
+# Phát hiện tấn công SSH BruteForce
+https://drive.google.com/file/d/1mxWrY7YiBgDIaUWt_oxvybwRFGCQ-dMU/view?usp=sharing
